@@ -72,7 +72,8 @@ jobs:
           sudo insmod kernel/xcvr_i2c_emu.ko nr_cages=3
           sudo mount -t debugfs none /sys/kernel/debug 2>/dev/null || true
           sudo ls /sys/kernel/debug/xcvr_i2c_emu
-          for a in /sys/class/i2c-adapter/*; do echo "$a: $(cat "$a/name")"; done
+          for a in /sys/bus/i2c/devices/i2c-*; do echo "$a: $(cat "$a/name")"; done
+          ls -l /dev/i2c-* | tail -n 5
           sudo dmesg | tail -n 5
       - name: Kernel path tests
         run: sudo -E env PYTHONPATH=sim OPTIWATCH_KERNEL=1 python3 -m unittest -v tests.kernel.test_kernel

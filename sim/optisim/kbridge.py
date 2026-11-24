@@ -59,8 +59,10 @@ def _read(path, n):
 def find_adapters(nr):
     """Map cage index -> /dev/i2c-N by adapter name."""
     out = {}
-    base = "/sys/class/i2c-adapter"
+    base = "/sys/bus/i2c/devices"   # adapters appear here as i2c-N
     for entry in os.listdir(base):
+        if not entry.startswith("i2c-"):
+            continue
         try:
             with open(os.path.join(base, entry, "name")) as f:
                 name = f.read().strip()
