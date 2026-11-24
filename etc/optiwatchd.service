@@ -1,0 +1,20 @@
+[Unit]
+Description=OptiWatch optical transceiver manager
+After=systemd-modules-load.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/sbin/optiwatchd -c /etc/optiwatchd.conf -s /run/optiwatchd.sock -e /var/log/optiwatchd/events.jsonl
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=on-failure
+RestartSec=2
+LogsDirectory=optiwatchd
+# Needs only the I2C character devices.
+DeviceAllow=char-i2c rw
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

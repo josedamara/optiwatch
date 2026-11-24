@@ -63,7 +63,7 @@ private:
 	void evaluate_alarms();
 	void eval_threshold(enum xcvr_metric m, int lane, double value, bool enabled, bool suppress_low);
 	void set_discrete(const std::string &type, int lane, bool on, Severity sev, const std::string &msg);
-	void run_als();
+	bool run_als(); // true if any lane changed
 
 	PortConfig cfg_;
 	const Tunables &t_;

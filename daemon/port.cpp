@@ -296,8 +296,8 @@ void Port::do_poll(int64_t now)
 	}
 
 	evaluate_alarms();
-	if (cfg_.als)
-		run_als();
+	if (cfg_.als && run_als())
+		next_due_ = now + t_.fast_poll_ms; // show the new Tx state promptly
 }
 
 void Port::set_discrete(const std::string &type, int lane, bool on, Severity sev, const std::string &msg)
@@ -405,10 +405,11 @@ void Port::evaluate_alarms()
 // receive signal the far end is assumed unreachable (fibre cut), so the
 // local transmitter on that lane is shut off for eye safety and restored
 // once light returns.
-void Port::run_als()
+bool Port::run_als()
 {
 	if (!mod_.info.soft_tx_disable)
-		return;
+		return false;
+	unsigned before = als_mask_;
 	for (unsigned l = 0; l < dom_.lanes; l++) {
 		unsigned bit = 1u << l;
 		int rc = 0;
@@ -428,6 +429,7 @@ void Port::run_als()
 		if (rc)
 			LOG_WARN("%s: ALS lane %u: %s", cfg_.name.c_str(), l, std::strerror(-rc));
 	}
+	return als_mask_ != before;
 }
 
 int Port::set_tx_disable(unsigned lane_mask, bool disable, std::string &err)
