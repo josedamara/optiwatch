@@ -30,10 +30,14 @@ from .server import Simulator
 DEBUGFS = "/sys/kernel/debug/xcvr_i2c_emu"
 
 
+# debugfs attribute files (bool/u32) are not seekable, so use plain
+# read()/write() on a fresh descriptor, which starts at offset 0.
 def _write(path, data):
     fd = os.open(path, os.O_WRONLY)
     try:
-        os.pwrite(fd, data, 0)
+        view = memoryview(data)
+        while view:
+            view = view[os.write(fd, view):]
     finally:
         os.close(fd)
 
@@ -41,7 +45,13 @@ def _write(path, data):
 def _read(path, n):
     fd = os.open(path, os.O_RDONLY)
     try:
-        return os.pread(fd, n, 0)
+        out = bytearray()
+        while len(out) < n:
+            chunk = os.read(fd, n - len(out))
+            if not chunk:
+                break
+            out += chunk
+        return bytes(out)
     finally:
         os.close(fd)
 
