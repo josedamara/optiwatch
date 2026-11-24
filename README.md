@@ -1,10 +1,10 @@
-# OptiWatch — optical transceiver manager
+# OptiWatch: optical transceiver manager
 
 A Linux daemon in C/C++ that discovers, monitors and controls pluggable optical
 transceivers (SFP/SFP+ and QSFP-DD/OSFP) over I2C, implemented from the public
 **SFF-8472** and **OIF CMIS** management specifications.
 
-> Work in progress — see the commit history for the build-up step by step.
+> Work in progress: see the commit history for the build-up step by step.
 
 ## Planned layout
 

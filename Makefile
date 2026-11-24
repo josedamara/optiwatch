@@ -17,8 +17,8 @@ BUILD   ?= build
 WARN     = -Wall -Wextra -Wshadow -Wformat=2 -Wconversion -Wno-sign-conversion -Werror
 CFLAGS  ?= -O2 -g
 CXXFLAGS?= -O2 -g
-CFLAGS  += -std=c11 $(WARN) -D_GNU_SOURCE -Iinclude -MMD -MP
-CXXFLAGS+= -std=c++17 $(WARN) -D_GNU_SOURCE -Iinclude -MMD -MP
+ALL_CFLAGS   = -std=c11 $(WARN) -D_GNU_SOURCE -Iinclude -MMD -MP $(CFLAGS)
+ALL_CXXFLAGS = -std=c++17 $(WARN) -D_GNU_SOURCE -Iinclude -MMD -MP $(CXXFLAGS)
 LDLIBS  += -lm
 
 LIB_SRC  = $(wildcard lib/*.c)
@@ -53,24 +53,24 @@ all: $(BINS)
 
 $(BUILD)/%.o: %.c
 	@mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(ALL_CFLAGS) -c $< -o $@
 
 $(BUILD)/%.o: %.cpp
 	@mkdir -p $(dir $@)
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+	$(CXX) $(ALL_CXXFLAGS) -c $< -o $@
 
 $(LIB): $(LIB_OBJ)
 	@mkdir -p $(dir $@)
 	$(AR) rcs $@ $^
 
 $(DAEMON): $(DAEMON_OBJ) $(LIB)
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o $@ $(LDLIBS)
+	$(CXX) $(ALL_CXXFLAGS) $(LDFLAGS) $^ -o $@ $(LDLIBS)
 
 $(CTL): $(BUILD)/tools/optiwatch.o
-	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
+	$(CC) $(ALL_CFLAGS) $(LDFLAGS) $^ -o $@
 
 $(UNIT): $(UNIT_OBJ) $(LIB)
-	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@ $(LDLIBS)
+	$(CC) $(ALL_CFLAGS) $(LDFLAGS) $^ -o $@ $(LDLIBS)
 
 unit: $(UNIT)
 	./$(UNIT)
