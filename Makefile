@@ -1,4 +1,4 @@
-# xcvrd - optical transceiver manager
+# OptiWatch - optical transceiver manager
 #
 # Targets:
 #   make            build library, daemon, CLI and unit tests
@@ -27,10 +27,10 @@ LIB      = $(BUILD)/libxcvr.a
 
 DAEMON_SRC = $(wildcard daemon/*.cpp)
 DAEMON_OBJ = $(DAEMON_SRC:%.cpp=$(BUILD)/%.o)
-DAEMON     = $(BUILD)/xcvrd
+DAEMON     = $(BUILD)/optiwatchd
 
-CTL_SRC  = tools/xcvrctl.c
-CTL      = $(BUILD)/xcvrctl
+CTL_SRC  = tools/optiwatch.c
+CTL      = $(BUILD)/optiwatch
 
 UNIT_SRC = $(wildcard tests/unit/*.c)
 UNIT_OBJ = $(UNIT_SRC:%.c=$(BUILD)/%.o)
@@ -66,7 +66,7 @@ $(LIB): $(LIB_OBJ)
 $(DAEMON): $(DAEMON_OBJ) $(LIB)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o $@ $(LDLIBS)
 
-$(CTL): $(BUILD)/tools/xcvrctl.o
+$(CTL): $(BUILD)/tools/optiwatch.o
 	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
 
 $(UNIT): $(UNIT_OBJ) $(LIB)
@@ -76,7 +76,7 @@ unit: $(UNIT)
 	./$(UNIT)
 
 itest: all
-	XCVRD_BUILD=$(abspath $(BUILD)) $(PYTHON) -m unittest discover -s tests/integration -t . -v
+	OPTIWATCH_BUILD=$(abspath $(BUILD)) $(PYTHON) -m unittest discover -s tests/integration -t . -v
 
 test: unit itest
 
@@ -95,4 +95,4 @@ kmod-clean:
 clean:
 	rm -rf $(BUILD) build-asan
 
--include $(LIB_OBJ:.o=.d) $(DAEMON_OBJ:.o=.d) $(UNIT_OBJ:.o=.d) $(BUILD)/tools/xcvrctl.d
+-include $(LIB_OBJ:.o=.d) $(DAEMON_OBJ:.o=.d) $(UNIT_OBJ:.o=.d) $(BUILD)/tools/optiwatch.d
