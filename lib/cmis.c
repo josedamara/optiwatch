@@ -69,6 +69,8 @@ int cmis_parse_info(const struct cmis_image *img, struct xcvr_info *info)
 	xcvr_copy_ascii(info->serial, sizeof(info->serial), p0 + UP(CMIS_P00_VENDOR_SN), 16);
 	xcvr_copy_ascii(info->date_code, sizeof(info->date_code), p0 + UP(CMIS_P00_DATE_CODE), 8);
 	memcpy(info->oui, p0 + UP(CMIS_P00_VENDOR_OUI), 3);
+	/* Page 00h byte 222: checksum over bytes 128..221. */
+	info->cc_base_ok = xcvr_checksum8(p0, UP(CMIS_P00_CHECKSUM)) == p0[UP(CMIS_P00_CHECKSUM)];
 
 	if (info->flat_mem) {
 		/* Passive copper: no page 01h/02h, no monitors. */

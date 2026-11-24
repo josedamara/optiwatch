@@ -98,6 +98,7 @@ void fx_cmis_fill(xcvr_bus *bus)
 	fx_put_ascii(p0 + CMIS_P00_VENDOR_SN - 128, "OWQ2400777", 16);
 	fx_put_ascii(p0 + CMIS_P00_DATE_CODE - 128, "240901  ", 8);
 	p0[CMIS_P00_CONNECTOR - 128] = 0x0C;
+	p0[CMIS_P00_CHECKSUM - 128] = xcvr_checksum8(p0, CMIS_P00_CHECKSUM - 128);
 
 	uint8_t *p1 = xcvr_mem_cmis_page(bus, 0x01);
 	fx_put16(p1 + CMIS_P01_WAVELENGTH - 128, 1311 * 20); /* 1311 nm in 0.05 nm */

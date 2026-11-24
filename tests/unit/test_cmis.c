@@ -27,7 +27,30 @@ static void test_load_info(void)
 	CHECK_EQ_INT(m.info.bias_multiplier, 2);
 	CHECK(m.info.ddm_supported);
 	CHECK(!m.info.flat_mem);
+	CHECK(m.info.cc_base_ok);
 	CHECK_STR(xcvr_connector_name(m.info.connector), "MPO 1x12");
+	xcvr_bus_close(bus);
+}
+
+static void test_page00_checksum(void)
+{
+	xcvr_bus *bus = cmis_bus();
+	xcvr_mem_cmis_page(bus, 0x00)[CMIS_P00_VENDOR_SN - 128] ^= 0x01;
+	struct xcvr_module m;
+	CHECK_EQ_INT(xcvr_module_load(bus, &m), 0);
+	CHECK(!m.info.cc_base_ok);
+	xcvr_bus_close(bus);
+}
+
+static void test_page_select_verify(void)
+{
+	xcvr_bus *bus = cmis_bus();
+	/* The memory backend accepts any page; a module that rejects the
+	 * selection keeps the old value, which the readback must catch. */
+	CHECK_EQ_INT(xcvr_cmis_select_page(bus, 0x11), 0);
+	CHECK_EQ_INT(xcvr_mem_cmis_page(bus, 0xFF)[CMIS_PAGE_SELECT], 0x11);
+	uint8_t buf[2];
+	CHECK_EQ_INT(xcvr_cmis_read_page(bus, 0x02, 10, buf, 2), -EINVAL);
 	xcvr_bus_close(bus);
 }
 
@@ -127,6 +150,8 @@ static void test_flat_memory(void)
 
 const struct test_case cmis_tests[] = {
 	{ "load_info", test_load_info },
+	{ "page00_checksum", test_page00_checksum },
+	{ "page_select_verify", test_page_select_verify },
 	{ "thresholds", test_thresholds },
 	{ "poll", test_poll },
 	{ "tx_disable", test_tx_disable },

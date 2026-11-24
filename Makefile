@@ -4,6 +4,7 @@
 #   make            build library, daemon, CLI and unit tests
 #   make test       run C unit tests + Python integration tests
 #   make unit       run C unit tests only
+#   make simtest    run the simulator's own Python tests
 #   make itest      run Python integration tests only
 #   make kmod       build the emulated I2C adapter kernel module (needs kernel headers)
 #   make asan       rebuild everything with AddressSanitizer/UBSan and run tests
@@ -32,11 +33,13 @@ DAEMON     = $(BUILD)/optiwatchd
 CTL_SRC  = tools/optiwatch.c
 CTL      = $(BUILD)/optiwatch
 
+DUMP     = $(BUILD)/xcvrdump
+
 UNIT_SRC = $(wildcard tests/unit/*.c)
 UNIT_OBJ = $(UNIT_SRC:%.c=$(BUILD)/%.o)
 UNIT     = $(BUILD)/unit_tests
 
-BINS = $(LIB)
+BINS = $(LIB) $(DUMP)
 ifneq ($(DAEMON_SRC),)
 BINS += $(DAEMON)
 endif
@@ -47,7 +50,7 @@ ifneq ($(UNIT_SRC),)
 BINS += $(UNIT)
 endif
 
-.PHONY: all test unit itest kmod kmod-clean asan clean
+.PHONY: all test unit simtest itest kmod kmod-clean asan clean
 
 all: $(BINS)
 
@@ -69,6 +72,9 @@ $(DAEMON): $(DAEMON_OBJ) $(LIB)
 $(CTL): $(BUILD)/tools/optiwatch.o
 	$(CC) $(ALL_CFLAGS) $(LDFLAGS) $^ -o $@
 
+$(DUMP): $(BUILD)/tools/xcvrdump.o $(LIB)
+	$(CC) $(ALL_CFLAGS) $(LDFLAGS) $^ -o $@ $(LDLIBS)
+
 $(UNIT): $(UNIT_OBJ) $(LIB)
 	$(CC) $(ALL_CFLAGS) $(LDFLAGS) $^ -o $@ $(LDLIBS)
 
@@ -76,9 +82,12 @@ unit: $(UNIT)
 	./$(UNIT)
 
 itest: all
-	OPTIWATCH_BUILD=$(abspath $(BUILD)) $(PYTHON) -m unittest discover -s tests/integration -t . -v
+	OPTIWATCH_BUILD=$(abspath $(BUILD)) PYTHONPATH=sim $(PYTHON) -m unittest discover -s tests/integration -t . -v
 
-test: unit itest
+simtest:
+	PYTHONPATH=sim $(PYTHON) -m unittest discover -s tests/sim -t . -v
+
+test: unit simtest itest
 
 asan:
 	$(MAKE) BUILD=build-asan \
@@ -95,4 +104,4 @@ kmod-clean:
 clean:
 	rm -rf $(BUILD) build-asan
 
--include $(LIB_OBJ:.o=.d) $(DAEMON_OBJ:.o=.d) $(UNIT_OBJ:.o=.d) $(BUILD)/tools/optiwatch.d
+-include $(LIB_OBJ:.o=.d) $(DAEMON_OBJ:.o=.d) $(UNIT_OBJ:.o=.d) $(BUILD)/tools/optiwatch.d $(BUILD)/tools/xcvrdump.d

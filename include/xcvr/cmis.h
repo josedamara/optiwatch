@@ -52,6 +52,7 @@ enum {
 	CMIS_P00_VENDOR_SN      = 166, /* 16 bytes */
 	CMIS_P00_DATE_CODE      = 182, /* 8 bytes */
 	CMIS_P00_CONNECTOR      = 203,
+	CMIS_P00_CHECKSUM       = 222, /* sum of 128..221 */
 };
 
 /* Upper page 01h */
