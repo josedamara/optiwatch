@@ -1,0 +1,37 @@
+# Build output
+build/
+*.o
+*.a
+*.so
+*.d
+
+# Kernel module build artefacts
+kernel/*.ko
+kernel/*.mod
+kernel/*.mod.c
+kernel/*.mod.o
+kernel/.*.cmd
+kernel/Module.symvers
+kernel/modules.order
+kernel/.tmp_versions/
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+.venv/
+
+# Runtime
+*.sock
+*.log
+events.jsonl
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Local agent state
+.claude/
