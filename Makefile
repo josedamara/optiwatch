@@ -82,7 +82,7 @@ unit: $(UNIT)
 	./$(UNIT)
 
 itest: all
-	OPTIWATCH_BUILD=$(abspath $(BUILD)) PYTHONPATH=sim $(PYTHON) -m unittest discover -s tests/integration -t . -v
+	OPTIWATCH_BUILD="$(CURDIR)/$(BUILD)" PYTHONPATH=sim $(PYTHON) -m unittest discover -s tests/integration -t . -v
 
 simtest:
 	PYTHONPATH=sim $(PYTHON) -m unittest discover -s tests/sim -t . -v
