@@ -195,13 +195,14 @@ class Simulator:
     """Runs the I2C and control servers on background threads."""
 
     def __init__(self, i2c_endpoint, control_endpoint, ncages=4):
+        """i2c_endpoint may be None when something else (the kernel
+        bridge) exposes the modules to the host."""
         self.chassis = Chassis(ncages)
         self.i2c_endpoint = i2c_endpoint
         self.control_endpoint = control_endpoint
-        self._servers = [
-            _make_server(i2c_endpoint, I2CHandler, self.chassis),
-            _make_server(control_endpoint, ControlHandler, self.chassis),
-        ]
+        self._servers = [_make_server(control_endpoint, ControlHandler, self.chassis)]
+        if i2c_endpoint:
+            self._servers.append(_make_server(i2c_endpoint, I2CHandler, self.chassis))
         self._threads = []
 
     def start(self):
@@ -216,7 +217,7 @@ class Simulator:
             srv.shutdown()
             srv.server_close()
         for ep in (self.i2c_endpoint, self.control_endpoint):
-            if "/" in ep and os.path.exists(ep):
+            if ep and "/" in ep and os.path.exists(ep):
                 os.unlink(ep)
 
 

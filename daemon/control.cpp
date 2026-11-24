@@ -216,7 +216,7 @@ bool ControlServer::open(const std::string &path, std::string &err)
 	}
 	::unlink(path.c_str()); // stale socket from a previous run
 	if (::bind(listen_fd_, reinterpret_cast<sockaddr *>(&sa), sizeof(sa)) < 0 ||
-	    ::listen(listen_fd_, 8) < 0) {
+	    ::listen(listen_fd_, 64) < 0) {
 		err = "bind " + path + ": " + std::strerror(errno);
 		::close(listen_fd_);
 		listen_fd_ = -1;

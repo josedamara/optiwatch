@@ -169,14 +169,26 @@ class ControlInterfaceTest(DaemonTestCase):
         self.assertEqual(down.returncode, 1)
         self.assertIn("is optiwatchd running", down.stderr)
 
-    def test_many_clients(self):
+    def test_client_limit(self):
+        import json
         import socket
         conns = []
         for _ in range(20):
             s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
             s.connect(self.sock_path)
+            s.settimeout(2)
             conns.append(s)
-        self.d.call("ping")  # daemon still answers (some of the 20 get refused)
+        # The daemon serves 16 clients; the rest get an error line and are closed.
+        refused = 0
+        for s in conns[16:]:
+            data = s.recv(4096)
+            if data:
+                self.assertEqual(json.loads(data)["error"], "too many clients")
+                refused += 1
+        self.assertEqual(refused, 4)
+        # Connected clients are still served.
+        conns[0].sendall(b"ping\n")
+        self.assertTrue(json.loads(conns[0].recv(4096))["ok"])
         for s in conns:
             s.close()
         wait_until(lambda: self.d.call("ping")["ok"], what="ping after client storm")

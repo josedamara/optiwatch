@@ -1,0 +1,83 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build-and-test:
+    name: Build + unit/sim/integration tests (${{ matrix.cc }})
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - cc: gcc
+            cxx: g++
+          - cc: clang
+            cxx: clang++
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: make -j"$(nproc)" CC=${{ matrix.cc }} CXX=${{ matrix.cxx }}
+      - name: C unit tests
+        run: make unit CC=${{ matrix.cc }} CXX=${{ matrix.cxx }}
+      - name: Simulator tests
+        run: make simtest
+      - name: Integration tests (daemon vs simulator)
+        run: make itest CC=${{ matrix.cc }} CXX=${{ matrix.cxx }}
+
+  sanitizers:
+    name: ASan + UBSan
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Full test suite under sanitizers
+        env:
+          ASAN_OPTIONS: detect_leaks=1:abort_on_error=1
+          UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
+        run: make asan
+
+  static-analysis:
+    name: cppcheck
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y cppcheck
+      - name: cppcheck
+        run: |
+          cppcheck --enable=warning,performance,portability --error-exitcode=1 \
+            --inline-suppr --std=c11 -Iinclude lib tools tests/unit
+          cppcheck --enable=warning,performance,portability --error-exitcode=1 \
+            --inline-suppr --std=c++17 --language=c++ -Iinclude daemon
+
+  kernel:
+    name: Kernel module (build, load, test through i2c-dev)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install kernel headers and i2c-dev
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y "linux-headers-$(uname -r)" "linux-modules-extra-$(uname -r)" || \
+            sudo apt-get install -y "linux-headers-$(uname -r)"
+      - name: Build module
+        run: make kmod
+      - name: Build userspace
+        run: make -j"$(nproc)"
+      - name: Load module
+        run: |
+          sudo modprobe i2c-dev
+          sudo insmod kernel/xcvr_i2c_emu.ko nr_cages=3
+          sudo mount -t debugfs none /sys/kernel/debug 2>/dev/null || true
+          sudo ls /sys/kernel/debug/xcvr_i2c_emu
+          for a in /sys/class/i2c-adapter/*; do echo "$a: $(cat "$a/name")"; done
+          sudo dmesg | tail -n 5
+      - name: Kernel path tests
+        run: sudo -E env PYTHONPATH=sim OPTIWATCH_KERNEL=1 python3 -m unittest -v tests.kernel.test_kernel
+      - name: Unload module
+        if: always()
+        run: |
+          sudo rmmod xcvr_i2c_emu || true
+          sudo dmesg | tail -n 20

@@ -76,6 +76,18 @@ static void test_absent_module(void)
 	CHECK_EQ_INT(xcvr_bus_present(bus), 1);
 	xcvr_mem_set_present(bus, 0);
 	CHECK_EQ_INT(xcvr_bus_present(bus), 0);
+
+	/* Probe path (no presence signal): a bus error is not an absence. */
+	const struct xcvr_bus_ops *ops = bus->ops;
+	struct xcvr_bus_ops probe_ops = *ops;
+	probe_ops.present = NULL;
+	bus->ops = &probe_ops;
+	xcvr_mem_set_present(bus, 1);
+	xcvr_mem_fail_next(bus, 1);
+	CHECK_EQ_INT(xcvr_bus_present(bus), 1);
+	xcvr_mem_set_present(bus, 0);
+	CHECK_EQ_INT(xcvr_bus_present(bus), 0);
+	bus->ops = ops;
 	unsigned long retries = bus->stats.retries;
 	CHECK_EQ_INT(xcvr_module_load(bus, &m), -ENXIO);
 	CHECK_EQ_INT(bus->stats.retries, retries); /* NACK is not retried */

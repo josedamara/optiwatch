@@ -143,7 +143,8 @@ int xcvr_bus_present(xcvr_bus *bus)
 			return p < 0 ? 0 : p;
 	}
 	/* No MOD_ABS signal: a module is present if its EEPROM ACKs. Use the raw
-	 * op so a missing module doesn't count as a bus error. */
+	 * op so a missing module doesn't count as a bus error. Only a NACK means
+	 * "absent"; a transient bus error must not look like a removal. */
 	uint8_t id;
-	return bus->ops->read(bus, 0x50, 0, &id, 1) == 0;
+	return bus->ops->read(bus, 0x50, 0, &id, 1) != -ENXIO;
 }
